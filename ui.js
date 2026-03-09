@@ -1,14 +1,11 @@
 (function () {
-  const boardEl = document.getElementById("chess-board");
-  const currentPlayerEl = document.getElementById("current-player");
-  const gameStatusEl = document.getElementById("game-status");
-  const newGameBtn = document.getElementById("new-game-btn");
-  const flipBoardBtn = document.getElementById("flip-board-btn");
-
-  if (!boardEl || !window.ChessGame) {
-    // Если скрипт подключён не на той странице — просто выходим
-    return;
-  }
+  let boardEl;
+  let currentPlayerEl;
+  let gameStatusEl;
+  let newGameBtn;
+  let flipBoardBtn;
+  let resignBtn;
+  let drawBtn;
 
   const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
@@ -16,6 +13,8 @@
   let selected = null;
   let legalTargets = [];
   let isFlipped = false;
+  let resigned = false;
+  let drawAgreed = false;
 
   function pieceToChar(piece) {
     if (!piece) return "";
@@ -175,11 +174,18 @@
       const winner = status.winner === "w" ? "Белые" : "Чёрные";
       gameStatusEl.textContent = `Мат. Победа: ${winner}.`;
       gameStatusEl.classList.add("checkmate");
+    } else if (status.stalemate && drawAgreed) {
+      gameStatusEl.textContent = "Ничья по соглашению.";
     } else if (status.stalemate) {
       gameStatusEl.textContent = "Пат. Ничья.";
+    } else if (resigned && status.winner) {
+      const winner = status.winner === "w" ? "Белые" : "Чёрные";
+      gameStatusEl.textContent = `Победа: ${winner} (соперник сдался).`;
     } else if (status.inCheck) {
       gameStatusEl.textContent = "Шах!";
       gameStatusEl.classList.add("check");
+    } else if (window.ChessGame.isGameOver()) {
+      gameStatusEl.textContent = "Игра завершена.";
     } else {
       gameStatusEl.textContent = "Обычная позиция.";
     }
@@ -187,6 +193,8 @@
 
   function onNewGame() {
     window.ChessGame.reset();
+    resigned = false;
+    drawAgreed = false;
     clearSelection();
     renderBoard();
   }
@@ -196,12 +204,48 @@
     renderBoard();
   }
 
-  newGameBtn?.addEventListener("click", onNewGame);
-  flipBoardBtn?.addEventListener("click", onFlipBoard);
+  function initGame() {
+    if (!window.ChessGame) return;
 
-  window.addEventListener("DOMContentLoaded", () => {
+    boardEl = document.getElementById("chess-board");
+    currentPlayerEl = document.getElementById("current-player");
+    gameStatusEl = document.getElementById("game-status");
+    newGameBtn = document.getElementById("new-game-btn");
+    flipBoardBtn = document.getElementById("flip-board-btn");
+    resignBtn = document.getElementById("resign-btn");
+    drawBtn = document.getElementById("draw-btn");
+
+    if (!boardEl || !currentPlayerEl || !gameStatusEl) {
+      return;
+    }
+
+    newGameBtn?.addEventListener("click", onNewGame);
+    flipBoardBtn?.addEventListener("click", onFlipBoard);
+    resignBtn?.addEventListener("click", () => {
+      if (window.ChessGame.isGameOver()) return;
+      const currentPlayer = window.ChessGame.getCurrentPlayer();
+      resigned = true;
+      drawAgreed = false;
+      window.ChessGame.resign(currentPlayer);
+      clearSelection();
+      renderBoard();
+    });
+    drawBtn?.addEventListener("click", () => {
+      if (window.ChessGame.isGameOver()) return;
+      resigned = false;
+      drawAgreed = true;
+      window.ChessGame.agreeDraw();
+      clearSelection();
+      renderBoard();
+    });
+
     window.ChessGame.initBoard();
     renderBoard();
-  });
-})();
+  }
 
+  if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", initGame);
+  } else {
+    initGame();
+  }
+})();

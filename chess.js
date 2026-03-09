@@ -391,6 +391,24 @@
     return lastMove ? { from: { ...lastMove.from }, to: { ...lastMove.to } } : null;
   }
 
+  function resign(color) {
+    if (gameOver) return;
+    status.inCheck = false;
+    status.checkmate = false;
+    status.stalemate = false;
+    status.winner = color === WHITE ? BLACK : WHITE;
+    gameOver = true;
+  }
+
+  function agreeDraw() {
+    if (gameOver) return;
+    status.inCheck = false;
+    status.checkmate = false;
+    status.stalemate = true;
+    status.winner = null;
+    gameOver = true;
+  }
+
   const api = {
     initBoard,
     reset,
@@ -399,7 +417,10 @@
     getStatus,
     isGameOver,
     getLastMove,
+    makeMove,
     getLegalMovesForSquare: generateLegalMovesForSquare,
+    resign,
+    agreeDraw,
   };
 
   if (typeof window !== "undefined") {
