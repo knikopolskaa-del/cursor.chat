@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мини‑шахматы</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="title">Мини‑шахматы</h1>
+      <p class="subtitle">Игра для двух человек за одним устройством</p>
+    </header>
+
+    <main class="main">
+      <section class="board-section">
+        <div id="chess-board" class="board" aria-label="Шахматная доска"></div>
+      </section>
+
+      <section class="side-panel">
+        <div class="status-panel">
+          <div class="status-row">
+            <span class="status-label">Сейчас ход:</span>
+            <span id="current-player" class="status-value">—</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">Состояние:</span>
+            <span id="game-status" class="status-value">Новая партия не начата</span>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="new-game-btn" class="btn primary">Новая партия</button>
+          <button id="flip-board-btn" class="btn secondary">Перевернуть доску</button>
+        </div>
+
+        <div class="hint-panel">
+          <h2 class="panel-title">Подсказки</h2>
+          <ul class="hint-list">
+            <li>Кликни по своей фигуре, чтобы увидеть доступные ходы.</li>
+            <li>Кликни по подсвеченной клетке, чтобы сделать ход.</li>
+            <li>При мате игра автоматически завершится.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Шахматы без регистрации и SMS — играй прямо в браузере.</span>
+    </footer>
+  </div>
+
+  <script src="chess.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
+
