@@ -529,6 +529,17 @@ body {
   letter-spacing: 0.8px;
 }
 
+/* Обёртка для поля с кнопкой внутри (пароль + глазик) */
+.field-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-input-wrap .field-input {
+  padding-right: 50px; /* место под глазик */
+}
+
 .field-input {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -538,6 +549,33 @@ body {
   font-size: 1.05rem;
   outline: none;
   transition: border-color 0.2s, background 0.2s;
+  width: 100%;
+}
+
+/* Кнопка-глазик */
+.eye-btn {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+  border-radius: 6px;
+}
+
+.eye-btn:hover {
+  color: var(--text);
+}
+
+.eye-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 .field-input::placeholder {

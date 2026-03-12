@@ -37,12 +37,12 @@
         <!-- ── Форма входа ────────────────────────────────────────────── -->
         <form id="form-login" class="auth-form" onsubmit="handleLogin(event)" autocomplete="off">
           <div class="field">
-            <label class="field-label" for="login-username">Имя пользователя</label>
+            <label class="field-label" for="login-username">Никнейм</label>
             <input
               id="login-username"
               class="field-input"
               type="text"
-              placeholder="chess_player"
+              placeholder="Введите никнейм"
               autocomplete="off"
               readonly
             >
@@ -50,14 +50,23 @@
 
           <div class="field">
             <label class="field-label" for="login-password">Пароль</label>
-            <input
-              id="login-password"
-              class="field-input"
-              type="password"
-              placeholder="••••••"
-              autocomplete="off"
-              readonly
-            >
+            <div class="field-input-wrap">
+              <input
+                id="login-password"
+                class="field-input"
+                type="password"
+                placeholder="Введите пароль"
+                autocomplete="off"
+                readonly
+              >
+              <!-- Кнопка скрыта пока поле пустое; управляется из auth.js -->
+              <button type="button" class="eye-btn hidden" id="login-eye" aria-label="Показать пароль" tabindex="-1">
+                <!-- Открытый глаз: пароль виден. По умолчанию скрыт -->
+                <svg class="eye-icon eye-icon--open hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12S5 5 12 5s11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                <!-- Закрытый глаз: пароль скрыт. По умолчанию виден -->
+                <svg class="eye-icon eye-icon--closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9 Q12 17 22 9"/><line x1="7" y1="12.5" x2="6" y2="16.5"/><line x1="12" y1="13.5" x2="12" y2="17.5"/><line x1="17" y1="12.5" x2="18" y2="16.5"/></svg>
+              </button>
+            </div>
           </div>
 
           <!-- Сюда выводится сообщение об ошибке -->
@@ -69,7 +78,7 @@
         <!-- ── Форма регистрации ──────────────────────────────────────── -->
         <form id="form-register" class="auth-form hidden" onsubmit="handleRegister(event)">
           <div class="field">
-            <label class="field-label" for="reg-username">Имя пользователя</label>
+            <label class="field-label" for="reg-username">Никнейм</label>
             <input
               id="reg-username"
               class="field-input"
@@ -82,14 +91,20 @@
 
           <div class="field">
             <label class="field-label" for="reg-password">Пароль</label>
-            <input
-              id="reg-password"
-              class="field-input"
-              type="password"
-              placeholder="минимум 6 символов"
-              autocomplete="new-password"
-              required
-            >
+            <div class="field-input-wrap">
+              <input
+                id="reg-password"
+                class="field-input"
+                type="password"
+                placeholder="минимум 6 символов"
+                autocomplete="new-password"
+                required
+              >
+              <button type="button" class="eye-btn hidden" id="reg-eye" aria-label="Показать пароль" tabindex="-1">
+                <svg class="eye-icon eye-icon--open hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12S5 5 12 5s11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-icon eye-icon--closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9 Q12 17 22 9"/><line x1="7" y1="12.5" x2="6" y2="16.5"/><line x1="12" y1="13.5" x2="12" y2="17.5"/><line x1="17" y1="12.5" x2="18" y2="16.5"/></svg>
+              </button>
+            </div>
           </div>
 
           <div id="register-error" class="auth-error hidden"></div>

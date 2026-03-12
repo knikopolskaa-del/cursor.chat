@@ -25,6 +25,47 @@ fetch('/me')
   el.addEventListener('focus', () => el.removeAttribute('readonly'), { once: true });
 });
 
+// ─── Глазик в поле пароля ────────────────────────────────────────────────────
+
+// Подключает логику глазика к паре (поле пароля, кнопка).
+// Закрытый глаз = пароль скрыт (по умолчанию).
+// Открытый глаз  = пароль виден.
+// Кнопка появляется при вводе первого символа и исчезает при очистке поля.
+function initEye(inputId, eyeBtnId) {
+  const input      = document.getElementById(inputId);
+  const btn        = document.getElementById(eyeBtnId);
+  const iconOpen   = btn.querySelector('.eye-icon--open');
+  const iconClosed = btn.querySelector('.eye-icon--closed');
+
+  // Показываем / скрываем кнопку в зависимости от наличия текста
+  input.addEventListener('input', () => {
+    if (input.value.length > 0) {
+      btn.classList.remove('hidden');
+    } else {
+      // Поле очищено: скрываем кнопку и сбрасываем в исходное состояние
+      btn.classList.add('hidden');
+      input.type = 'password';
+      iconOpen.classList.add('hidden');
+      iconClosed.classList.remove('hidden');
+      btn.setAttribute('aria-label', 'Показать пароль');
+    }
+  });
+
+  // Клик: переключаем видимость пароля и иконку
+  // Закрытый глаз → клик → пароль видно, показываем открытый глаз
+  // Открытый глаз → клик → пароль скрыт, показываем закрытый глаз
+  btn.addEventListener('click', () => {
+    const isVisible = input.type === 'text';
+    input.type = isVisible ? 'password' : 'text';
+    iconOpen.classList.toggle('hidden', isVisible);    // открытый = только когда видно
+    iconClosed.classList.toggle('hidden', !isVisible); // закрытый = только когда скрыто
+    btn.setAttribute('aria-label', isVisible ? 'Показать пароль' : 'Скрыть пароль');
+  });
+}
+
+initEye('login-password', 'login-eye');
+initEye('reg-password',   'reg-eye');
+
 // ─── Переключение вкладок ────────────────────────────────────────────────────
 
 // Показывает нужную форму и подсвечивает активный таб
