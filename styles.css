@@ -537,7 +537,10 @@ body {
 }
 
 .field-input-wrap .field-input {
-  padding-right: 50px; /* место под глазик */
+  flex: 1;       /* растягивается на всё доступное место во flex-контейнере */
+  min-width: 0;  /* без этого flex-элемент не сжимается корректно */
+  width: auto;   /* сбрасываем width: 100% из базового правила */
+  padding-right: 50px;
 }
 
 .field-input {
