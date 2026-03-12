@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход — Marchess</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Декоративные шахматные фигуры на фоне страницы -->
+  <!-- pointer-events: none — не мешают кликам, z-index: 0 — всегда позади формы -->
+  <div class="chess-deco" aria-hidden="true">
+    <span class="chess-deco__piece chess-deco__piece--tl">♜</span>
+    <span class="chess-deco__piece chess-deco__piece--tr">♞</span>
+    <span class="chess-deco__piece chess-deco__piece--bl">♝</span>
+    <span class="chess-deco__piece chess-deco__piece--br">♛</span>
+    <span class="chess-deco__piece chess-deco__piece--ml">♙</span>
+    <span class="chess-deco__piece chess-deco__piece--mr">♔</span>
+  </div>
+
+  <div class="page page--auth">
+
+    <header class="header">
+      <h1 class="title">Marchess</h1>
+      <p class="subtitle">Столетние традиции, острые комбинации и живые эмоции —<br>побеждай друзей там, где решает каждый ход</p>
+    </header>
+
+    <main class="auth-wrap">
+      <div class="auth-card">
+
+        <!-- Переключатель "Вход / Регистрация" -->
+        <div class="auth-tabs">
+          <button id="tab-login"    class="auth-tab active" onclick="showTab('login')">Вход</button>
+          <button id="tab-register" class="auth-tab"        onclick="showTab('register')">Регистрация</button>
+        </div>
+
+        <!-- ── Форма входа ────────────────────────────────────────────── -->
+        <form id="form-login" class="auth-form" onsubmit="handleLogin(event)" autocomplete="off">
+          <div class="field">
+            <label class="field-label" for="login-username">Имя пользователя</label>
+            <input
+              id="login-username"
+              class="field-input"
+              type="text"
+              placeholder="chess_player"
+              autocomplete="off"
+              readonly
+            >
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="login-password">Пароль</label>
+            <input
+              id="login-password"
+              class="field-input"
+              type="password"
+              placeholder="••••••"
+              autocomplete="off"
+              readonly
+            >
+          </div>
+
+          <!-- Сюда выводится сообщение об ошибке -->
+          <div id="login-error" class="auth-error hidden"></div>
+
+          <button type="submit" id="login-submit" class="btn btn-primary">Войти</button>
+        </form>
+
+        <!-- ── Форма регистрации ──────────────────────────────────────── -->
+        <form id="form-register" class="auth-form hidden" onsubmit="handleRegister(event)">
+          <div class="field">
+            <label class="field-label" for="reg-username">Имя пользователя</label>
+            <input
+              id="reg-username"
+              class="field-input"
+              type="text"
+              placeholder="chess_player"
+              autocomplete="username"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="reg-password">Пароль</label>
+            <input
+              id="reg-password"
+              class="field-input"
+              type="password"
+              placeholder="минимум 6 символов"
+              autocomplete="new-password"
+              required
+            >
+          </div>
+
+          <div id="register-error" class="auth-error hidden"></div>
+
+          <button type="submit" id="register-submit" class="btn btn-primary">Создать аккаунт</button>
+        </form>
+
+      </div>
+    </main>
+
+
+  </div>
+
+  <script src="auth.js"></script>
+</body>
+</html>

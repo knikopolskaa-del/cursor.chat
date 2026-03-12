@@ -3,14 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Мини‑шахматы</title>
+  <title>Мини-шахматы</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="page">
     <header class="header">
-      <h1 class="title">Мини‑шахматы</h1>
-      <p class="subtitle">Игра для двух человек за одним устройством</p>
+      <!-- Строка с именем вошедшего пользователя и кнопкой выхода -->
+      <!-- Заполняется скриптом внизу страницы после проверки /me -->
+      <div id="user-bar" class="user-bar hidden">
+        <span class="user-bar__name" id="user-bar-name"></span>
+        <button class="user-bar__logout btn btn-secondary" onclick="logout()">Выйти</button>
+      </div>
+      <h1 class="title">Шахматы</h1>
+      <p class="subtitle">Играй с другом за одним устройством</p>
     </header>
 
     <main class="main">
@@ -18,43 +24,75 @@
         <div id="chess-board" class="board" aria-label="Шахматная доска"></div>
       </section>
 
-      <section class="side-panel">
-        <div class="status-panel">
-          <div class="status-row">
-            <span class="status-label">Сейчас ход:</span>
-            <span id="current-player" class="status-value">—</span>
+      <aside class="side-panel">
+        <div class="status-card">
+          <div class="status-header">
+            <div id="turn-indicator" class="turn-indicator white">♔</div>
+            <div class="status-title">
+              <h3>Ход</h3>
+              <div id="player-name" class="player-name">Белые</div>
+            </div>
           </div>
-          <div class="status-row">
-            <span class="status-label">Состояние:</span>
-            <span id="game-status" class="status-value">Новая партия не начата</span>
+          <div id="game-state" class="game-state normal">Новая партия</div>
+        </div>
+
+        <div class="controls-card">
+          <div class="btn-grid">
+            <button id="new-game-btn" class="btn btn-primary">Новая партия</button>
+            <button id="flip-board-btn" class="btn btn-secondary">↻ Перевернуть</button>
+            <button id="resign-btn" class="btn btn-danger">Сдаться</button>
+            <button id="draw-btn" class="btn btn-secondary">Ничья</button>
           </div>
         </div>
 
-        <div class="controls">
-          <button id="new-game-btn" class="btn primary">Новая партия</button>
-          <button id="flip-board-btn" class="btn secondary">Перевернуть доску</button>
-          <button id="resign-btn" class="btn secondary">Сдаться</button>
-          <button id="draw-btn" class="btn secondary">Ничья</button>
-        </div>
-
-        <div class="hint-panel">
-          <h2 class="panel-title">Подсказки</h2>
-          <ul class="hint-list">
-            <li>Кликни по своей фигуре, чтобы увидеть доступные ходы.</li>
-            <li>Кликни по подсвеченной клетке, чтобы сделать ход.</li>
-            <li>При мате игра автоматически завершится.</li>
+        <div class="info-card">
+          <div class="info-title">Как играть</div>
+          <ul class="info-list">
+            <li>Нажми на фигуру, чтобы выбрать</li>
+            <li>Нажми на подсвеченную клетку для хода</li>
+            <li>Круг — возможный ход, кольцо — взятие</li>
           </ul>
         </div>
-      </section>
+      </aside>
     </main>
 
     <footer class="footer">
-      <span>Шахматы без регистрации и SMS — играй прямо в браузере.</span>
+      <span>Играй без регистрации и SMS</span>
     </footer>
   </div>
 
   <script src="chess.js"></script>
   <script src="ui.js"></script>
+
+  <script>
+    // Проверяем авторизацию при каждой загрузке главной страницы.
+    // Если пользователь не вошёл — отправляем его на страницу входа.
+    fetch('/me')
+      .then(res => {
+        if (!res.ok) {
+          // Сессия не найдена → перенаправляем на форму входа
+          window.location.href = '/auth.html';
+          return null;
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (!data) return;
+        // Показываем имя пользователя в шапке
+        document.getElementById('user-bar-name').textContent = '♟ ' + data.username;
+        document.getElementById('user-bar').classList.remove('hidden');
+      })
+      .catch(() => {
+        // Если сервер не отвечает — показываем предупреждение,
+        // но не блокируем страницу (удобно при разработке без сервера)
+        console.warn('Сервер недоступен. Аутентификация отключена.');
+      });
+
+    // Выход из системы: удаляем сессию на сервере, переходим на страницу входа
+    function logout() {
+      fetch('/logout', { method: 'POST' })
+        .then(() => { window.location.href = '/auth.html'; });
+    }
+  </script>
 </body>
 </html>
-
