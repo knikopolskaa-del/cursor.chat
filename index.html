@@ -20,11 +20,9 @@
     </header>
 
     <main class="main">
-      <section class="board-section">
-        <div id="chess-board" class="board" aria-label="Шахматная доска"></div>
-      </section>
 
-      <aside class="side-panel">
+      <!-- Левая панель: статус хода + подсказки -->
+      <aside class="left-panel">
         <div class="status-card">
           <div class="status-header">
             <div id="turn-indicator" class="turn-indicator white">♔</div>
@@ -36,15 +34,6 @@
           <div id="game-state" class="game-state normal">Новая партия</div>
         </div>
 
-        <div class="controls-card">
-          <div class="btn-grid">
-            <button id="new-game-btn" class="btn btn-primary">Новая партия</button>
-            <button id="flip-board-btn" class="btn btn-secondary">↻ Перевернуть</button>
-            <button id="resign-btn" class="btn btn-danger">Сдаться</button>
-            <button id="draw-btn" class="btn btn-secondary">Ничья</button>
-          </div>
-        </div>
-
         <div class="info-card">
           <div class="info-title">Как играть</div>
           <ul class="info-list">
@@ -54,6 +43,36 @@
           </ul>
         </div>
       </aside>
+
+      <!-- Центральная колонка: доска + кнопки под ней -->
+      <div class="board-column">
+        <section class="board-section">
+          <div id="chess-board" class="board" aria-label="Шахматная доска"></div>
+        </section>
+
+        <div class="controls-card">
+          <div class="btn-grid">
+            <button id="new-game-btn"   class="btn btn-primary">Новая партия</button>
+            <button id="flip-board-btn" class="btn btn-secondary">↻ Перевернуть</button>
+            <button id="resign-btn"     class="btn btn-danger">Сдаться</button>
+            <button id="draw-btn"       class="btn btn-secondary">Ничья</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Правая колонка: нотация той же ширины что и доска -->
+      <div class="notation-card">
+        <div class="notation-nav">
+          <button id="notation-first" class="notation-nav-btn" aria-label="К первому ходу">«</button>
+          <button id="notation-prev"  class="notation-nav-btn" aria-label="Прокрутить вверх">‹</button>
+          <button id="notation-next"  class="notation-nav-btn" aria-label="Прокрутить вниз">›</button>
+          <button id="notation-last"  class="notation-nav-btn" aria-label="К последнему ходу">»</button>
+        </div>
+        <div id="notation-body" class="notation-body">
+          <span class="notation-empty">Ходов пока нет</span>
+        </div>
+      </div>
+
     </main>
 
     <footer class="footer">

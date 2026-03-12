@@ -7,6 +7,7 @@
   let flipBoardBtn;
   let resignBtn;
   let drawBtn;
+  let notationBodyEl;
 
   const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
@@ -111,6 +112,7 @@
     }
 
     updateStatus();
+    renderNotation();
   }
 
   // ── Drag & Drop ──────────────────────────────────────
@@ -296,6 +298,53 @@
     renderBoard();
   }
 
+  // Отрисовывает нотацию как текст с переносом.
+  // Формат: 1.e4 e5  2.Nf3 Nc6  3.Bb5 a6 ...
+  // Ходы идут строчкой — несколько пар на одну видимую строку.
+  function renderNotation() {
+    if (!notationBodyEl) return;
+
+    const history = window.ChessGame.getMoveHistory();
+    notationBodyEl.innerHTML = "";
+
+    if (history.length === 0) {
+      const ph = document.createElement("span");
+      ph.className = "notation-empty";
+      ph.textContent = "Ходов пока нет";
+      notationBodyEl.appendChild(ph);
+      return;
+    }
+
+    // Группируем попарно и строим inline-спаны
+    for (let i = 0; i < history.length; i += 2) {
+      const pair = document.createElement("span");
+      pair.className = "n-pair";
+
+      const num = document.createElement("span");
+      num.className = "n-num";
+      num.textContent = (Math.floor(i / 2) + 1) + ".";
+
+      const white = document.createElement("span");
+      white.className = "n-w";
+      white.textContent = history[i];
+
+      pair.appendChild(num);
+      pair.appendChild(white);
+
+      if (history[i + 1] !== undefined) {
+        const black = document.createElement("span");
+        black.className = "n-b";
+        black.textContent = history[i + 1];
+        pair.appendChild(black);
+      }
+
+      notationBodyEl.appendChild(pair);
+    }
+
+    // Прокручиваем к последнему ходу
+    notationBodyEl.scrollTop = notationBodyEl.scrollHeight;
+  }
+
   function updateStatus() {
     const currentPlayer = window.ChessGame.getCurrentPlayer();
     const status = window.ChessGame.getStatus();
@@ -351,16 +400,32 @@
   function initGame() {
     if (!window.ChessGame) return;
 
-    boardEl = document.getElementById("chess-board");
+    boardEl         = document.getElementById("chess-board");
     turnIndicatorEl = document.getElementById("turn-indicator");
-    playerNameEl = document.getElementById("player-name");
-    gameStateEl = document.getElementById("game-state");
-    newGameBtn = document.getElementById("new-game-btn");
-    flipBoardBtn = document.getElementById("flip-board-btn");
-    resignBtn = document.getElementById("resign-btn");
-    drawBtn = document.getElementById("draw-btn");
+    playerNameEl    = document.getElementById("player-name");
+    gameStateEl     = document.getElementById("game-state");
+    newGameBtn      = document.getElementById("new-game-btn");
+    flipBoardBtn    = document.getElementById("flip-board-btn");
+    resignBtn       = document.getElementById("resign-btn");
+    drawBtn         = document.getElementById("draw-btn");
+    notationBodyEl  = document.getElementById("notation-body");
 
     if (!boardEl || !playerNameEl || !gameStateEl) return;
+
+    // Навигация по нотации: скролл к началу/концу и по строке
+    const LINE = 26; // примерная высота одной строки нотации в пикселях
+    document.getElementById("notation-first")?.addEventListener("click", () => {
+      notationBodyEl.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    document.getElementById("notation-prev")?.addEventListener("click", () => {
+      notationBodyEl.scrollBy({ top: -LINE, behavior: "smooth" });
+    });
+    document.getElementById("notation-next")?.addEventListener("click", () => {
+      notationBodyEl.scrollBy({ top: LINE, behavior: "smooth" });
+    });
+    document.getElementById("notation-last")?.addEventListener("click", () => {
+      notationBodyEl.scrollTo({ top: notationBodyEl.scrollHeight, behavior: "smooth" });
+    });
 
     newGameBtn?.addEventListener("click", onNewGame);
     flipBoardBtn?.addEventListener("click", onFlipBoard);

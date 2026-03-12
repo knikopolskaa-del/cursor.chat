@@ -23,6 +23,10 @@
   };
   let lastMove = null;
 
+  // Плоский массив: нечётные индексы — ходы белых, чётные — чёрных
+  // Пример: ["e4", "e5", "Nf3", "Nc6", ...]
+  let moveHistory = [];
+
   function cloneBoard(srcBoard) {
     return srcBoard.map((row) => row.slice());
   }
@@ -313,6 +317,29 @@
     }
   }
 
+  // Переводит ход в алгебраическую нотацию.
+  // Вызывается после updateStatus, чтобы знать о шахе/мате.
+  function buildNotation(from, to, piece, capturedPiece, wasPromotion) {
+    const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+    const dest      = FILES[to.c] + (8 - to.r);  // напр. "e4"
+    const pieceType = piece[1];                    // P N B R Q K
+    const isCapture = capturedPiece !== null;
+
+    let notation;
+    if (pieceType === "P") {
+      // Пешка: просто клетка или взятие с указанием колонки
+      notation = isCapture ? FILES[from.c] + "x" + dest : dest;
+      if (wasPromotion) notation += "=Q";
+    } else {
+      notation = pieceType + (isCapture ? "x" : "") + dest;
+    }
+
+    if (status.checkmate)   notation += "#";
+    else if (status.inCheck) notation += "+";
+
+    return notation;
+  }
+
   function makeMove(from, to) {
     if (gameOver) return false;
     const { r: fr, c: fc } = from;
@@ -325,11 +352,15 @@
       return false;
     }
 
+    // Сохраняем данные для нотации ДО изменения доски
+    const capturedPiece   = board[tr][tc];
+    const pawnPromotionRank = currentPlayer === WHITE ? 0 : 7;
+    const wasPromotion    = piece[1] === PIECES.P && tr === pawnPromotionRank;
+
     board[tr][tc] = board[fr][fc];
     board[fr][fc] = null;
 
-    const pawnPromotionRank = currentPlayer === WHITE ? 0 : 7;
-    if (board[tr][tc][1] === PIECES.P && tr === pawnPromotionRank) {
+    if (wasPromotion) {
       board[tr][tc] = currentPlayer + PIECES.Q;
     }
 
@@ -337,6 +368,13 @@
 
     currentPlayer = currentPlayer === WHITE ? BLACK : WHITE;
     updateStatus();
+
+    // Записываем ход в историю (после updateStatus — знаем шах/мат)
+    moveHistory.push(buildNotation(
+      { r: fr, c: fc }, { r: tr, c: tc },
+      piece, capturedPiece, wasPromotion
+    ));
+
     return true;
   }
 
@@ -364,6 +402,7 @@
     currentPlayer = WHITE;
     gameOver = false;
     lastMove = null;
+    moveHistory = [];
     updateStatus();
   }
 
@@ -409,6 +448,10 @@
     gameOver = true;
   }
 
+  function getMoveHistory() {
+    return moveHistory.slice(); // возвращаем копию
+  }
+
   const api = {
     initBoard,
     reset,
@@ -421,6 +464,7 @@
     getLegalMovesForSquare: generateLegalMovesForSquare,
     resign,
     agreeDraw,
+    getMoveHistory,
   };
 
   if (typeof window !== "undefined") {
