@@ -315,7 +315,9 @@
       return;
     }
 
-    // Группируем попарно и строим inline-спаны
+    // Индекс последнего полухода — его подсвечиваем
+    const lastPly = history.length - 1;
+
     for (let i = 0; i < history.length; i += 2) {
       const pair = document.createElement("span");
       pair.className = "n-pair";
@@ -327,6 +329,7 @@
       const white = document.createElement("span");
       white.className = "n-w";
       white.textContent = history[i];
+      if (i === lastPly) white.classList.add("n-active");
 
       pair.appendChild(num);
       pair.appendChild(white);
@@ -335,6 +338,7 @@
         const black = document.createElement("span");
         black.className = "n-b";
         black.textContent = history[i + 1];
+        if (i + 1 === lastPly) black.classList.add("n-active");
         pair.appendChild(black);
       }
 

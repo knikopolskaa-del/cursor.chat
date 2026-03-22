@@ -796,3 +796,11 @@ body {
   color: var(--text-muted);
   opacity: 0.6;
 }
+
+.n-active {
+  background: rgba(212, 175, 55, 0.25);
+  color: var(--accent);
+  font-weight: 700;
+  border-radius: 3px;
+  padding: 0 2px;
+}
