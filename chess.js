@@ -12,6 +12,9 @@
     K: "K",
   };
 
+  // Буквы колонок для нотации (используется в buildNotation и в ui.js тоже дублируется)
+  const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
   let board = [];
   let currentPlayer = WHITE;
   let gameOver = false;
@@ -23,9 +26,22 @@
   };
   let lastMove = null;
 
-  // Плоский массив: нечётные индексы — ходы белых, чётные — чёрных
+  // Права на рокировку: ключи "wK", "wQ", "bK", "bQ" — остаются true, пока
+  // соответствующий король или ладья ни разу не ходили
+  let castlingRights = { wK: true, wQ: true, bK: true, bQ: true };
+
+  // Клетка, на которую можно взять пешку «на проходе» (null, если недоступно).
+  // Устанавливается, когда пешка только что двинулась на два поля вперёд.
+  let enPassantSquare = null;
+
+  // Плоский массив: чётные индексы — ходы белых, нечётные — чёрных
   // Пример: ["e4", "e5", "Nf3", "Nc6", ...]
   let moveHistory = [];
+
+  // Снимки доски и координаты {from,to} после каждого полухода (параллельны moveHistory)
+  let boardSnapshots  = [];
+  let moveHistoryMeta = [];
+  let initialBoardSnapshot = null;
 
   function cloneBoard(srcBoard) {
     return srcBoard.map((row) => row.slice());
@@ -184,6 +200,16 @@
           moves.push({ r: tr, c: tc });
         }
       }
+      // Взятие на проходе: только для реальной доски, не для гипотетических копий
+      if (b === board && enPassantSquare) {
+        for (const dc of [-1, 1]) {
+          const epR = r + dir;
+          const epC = c + dc;
+          if (epR === enPassantSquare.r && epC === enPassantSquare.c) {
+            moves.push({ r: epR, c: epC });
+          }
+        }
+      }
     } else if (type === PIECES.N) {
       const knightJumps = [
         [2, 1],
@@ -252,6 +278,27 @@
           }
         }
       }
+      // Рокировка: только для реальной доски и если король сейчас не под шахом
+      if (b === board && !isInCheck(color)) {
+        const rank  = color === WHITE ? 7 : 0;
+        const enemy = color === WHITE ? BLACK : WHITE;
+        if (r === rank && c === 4) {
+          // Короткая рокировка (королевский фланг)
+          if (castlingRights[color + "K"] &&
+              !getPiece(rank, 5) && !getPiece(rank, 6) &&
+              getPiece(rank, 7) === color + PIECES.R &&
+              !isSquareAttacked(rank, 5, enemy) && !isSquareAttacked(rank, 6, enemy)) {
+            moves.push({ r: rank, c: 6 });
+          }
+          // Длинная рокировка (ферзевый фланг)
+          if (castlingRights[color + "Q"] &&
+              !getPiece(rank, 1) && !getPiece(rank, 2) && !getPiece(rank, 3) &&
+              getPiece(rank, 0) === color + PIECES.R &&
+              !isSquareAttacked(rank, 3, enemy) && !isSquareAttacked(rank, 2, enemy)) {
+            moves.push({ r: rank, c: 2 });
+          }
+        }
+      }
     }
 
     return moves;
@@ -268,6 +315,12 @@
       const bCopy = cloneBoard(board);
       bCopy[move.r][move.c] = bCopy[r][c];
       bCopy[r][c] = null;
+      // При взятии на проходе пешка-жертва стоит не на клетке назначения,
+      // а на той же горизонтали, что атакующая пешка, и той же вертикали, что цель
+      if (piece && piece[1] === PIECES.P && enPassantSquare &&
+          move.r === enPassantSquare.r && move.c === enPassantSquare.c) {
+        bCopy[r][move.c] = null;
+      }
       if (!isInCheck(currentPlayer, bCopy)) {
         legal.push(move);
       }
@@ -287,6 +340,10 @@
           const bCopy = cloneBoard(b);
           bCopy[m.r][m.c] = bCopy[r][c];
           bCopy[r][c] = null;
+          if (p[1] === PIECES.P && enPassantSquare &&
+              m.r === enPassantSquare.r && m.c === enPassantSquare.c) {
+            bCopy[r][m.c] = null;
+          }
           if (!isInCheck(color, bCopy)) {
             moves.push({ from: { r, c }, to: { r: m.r, c: m.c } });
           }
@@ -319,11 +376,18 @@
 
   // Переводит ход в алгебраическую нотацию.
   // Вызывается после updateStatus, чтобы знать о шахе/мате.
-  function buildNotation(from, to, piece, capturedPiece, wasPromotion) {
-    const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+  function buildNotation(from, to, piece, capturedPiece, wasPromotion, isEnPassant) {
     const dest      = FILES[to.c] + (8 - to.r);  // напр. "e4"
     const pieceType = piece[1];                    // P N B R Q K
-    const isCapture = capturedPiece !== null;
+    const isCapture = capturedPiece !== null || isEnPassant;
+
+    // Рокировка
+    if (pieceType === PIECES.K && Math.abs(to.c - from.c) === 2) {
+      let notation = to.c === 6 ? "O-O" : "O-O-O";
+      if (status.checkmate)    notation += "#";
+      else if (status.inCheck) notation += "+";
+      return notation;
+    }
 
     let notation;
     if (pieceType === "P") {
@@ -334,7 +398,7 @@
       notation = pieceType + (isCapture ? "x" : "") + dest;
     }
 
-    if (status.checkmate)   notation += "#";
+    if (status.checkmate)    notation += "#";
     else if (status.inCheck) notation += "+";
 
     return notation;
@@ -353,16 +417,52 @@
     }
 
     // Сохраняем данные для нотации ДО изменения доски
-    const capturedPiece   = board[tr][tc];
+    const capturedPiece     = board[tr][tc]; // для взятия на проходе — null (цель пуста)
     const pawnPromotionRank = currentPlayer === WHITE ? 0 : 7;
-    const wasPromotion    = piece[1] === PIECES.P && tr === pawnPromotionRank;
+    const wasPromotion      = piece[1] === PIECES.P && tr === pawnPromotionRank;
+    const isEnPassant       = piece[1] === PIECES.P && enPassantSquare !== null &&
+                              tr === enPassantSquare.r && tc === enPassantSquare.c;
 
+    // Перемещаем фигуру
     board[tr][tc] = board[fr][fc];
     board[fr][fc] = null;
 
-    if (wasPromotion) {
-      board[tr][tc] = currentPlayer + PIECES.Q;
+    if (wasPromotion) board[tr][tc] = currentPlayer + PIECES.Q;
+
+    // Рокировка: дополнительно перемещаем ладью
+    if (piece[1] === PIECES.K && Math.abs(tc - fc) === 2) {
+      if (tc === 6) { board[fr][5] = board[fr][7]; board[fr][7] = null; } // короткая
+      else          { board[fr][3] = board[fr][0]; board[fr][0] = null; } // длинная
     }
+
+    // Взятие на проходе: убираем захваченную пешку (она на той же горизонтали,
+    // что атакующая пешка, и той же вертикали, что клетка назначения)
+    if (isEnPassant) board[fr][tc] = null;
+
+    // Обновляем права на рокировку
+    if (piece[1] === PIECES.K) {
+      castlingRights[currentPlayer + "K"] = false;
+      castlingRights[currentPlayer + "Q"] = false;
+    } else if (piece[1] === PIECES.R) {
+      if (fr === 7 && fc === 0) castlingRights.wQ = false;
+      if (fr === 7 && fc === 7) castlingRights.wK = false;
+      if (fr === 0 && fc === 0) castlingRights.bQ = false;
+      if (fr === 0 && fc === 7) castlingRights.bK = false;
+    }
+    // Если съели ладью — у противника тоже пропадает право на рокировку с этой стороны
+    if (capturedPiece === WHITE + PIECES.R) {
+      if (tr === 7 && tc === 0) castlingRights.wQ = false;
+      if (tr === 7 && tc === 7) castlingRights.wK = false;
+    }
+    if (capturedPiece === BLACK + PIECES.R) {
+      if (tr === 0 && tc === 0) castlingRights.bQ = false;
+      if (tr === 0 && tc === 7) castlingRights.bK = false;
+    }
+
+    // Обновляем клетку для взятия на проходе для следующего хода
+    enPassantSquare = (piece[1] === PIECES.P && Math.abs(tr - fr) === 2)
+      ? { r: (fr + tr) / 2, c: fc }
+      : null;
 
     lastMove = { from: { r: fr, c: fc }, to: { r: tr, c: tc } };
 
@@ -372,8 +472,10 @@
     // Записываем ход в историю (после updateStatus — знаем шах/мат)
     moveHistory.push(buildNotation(
       { r: fr, c: fc }, { r: tr, c: tc },
-      piece, capturedPiece, wasPromotion
+      piece, capturedPiece, wasPromotion, isEnPassant
     ));
+    boardSnapshots.push(cloneBoard(board));
+    moveHistoryMeta.push({ from: { r: fr, c: fc }, to: { r: tr, c: tc } });
 
     return true;
   }
@@ -399,10 +501,15 @@
       board[1][c] = BLACK + PIECES.P;
     }
 
-    currentPlayer = WHITE;
-    gameOver = false;
-    lastMove = null;
-    moveHistory = [];
+    currentPlayer  = WHITE;
+    gameOver       = false;
+    lastMove       = null;
+    castlingRights = { wK: true, wQ: true, bK: true, bQ: true };
+    enPassantSquare      = null;
+    moveHistory          = [];
+    boardSnapshots       = [];
+    moveHistoryMeta      = [];
+    initialBoardSnapshot = cloneBoard(board);
     updateStatus();
   }
 
@@ -452,6 +559,16 @@
     return moveHistory.slice(); // возвращаем копию
   }
 
+  function getBoardSnapshots() {
+    return boardSnapshots.map(s => s.map(r => r.slice()));
+  }
+  function getMoveHistoryMeta() {
+    return moveHistoryMeta.map(m => ({ from: { ...m.from }, to: { ...m.to } }));
+  }
+  function getInitialBoard() {
+    return initialBoardSnapshot ? initialBoardSnapshot.map(r => r.slice()) : null;
+  }
+
   const api = {
     initBoard,
     reset,
@@ -465,6 +582,9 @@
     resign,
     agreeDraw,
     getMoveHistory,
+    getBoardSnapshots,
+    getMoveHistoryMeta,
+    getInitialBoard,
   };
 
   if (typeof window !== "undefined") {

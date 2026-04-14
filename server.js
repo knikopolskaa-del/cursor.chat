@@ -34,10 +34,12 @@ function saveUsers(users) {
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 }
 
-// Хеширует пароль через SHA-256 (встроенный алгоритм).
-// В продакшне стоит использовать bcrypt с солью, но для учебного проекта SHA-256 достаточно.
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
+// Хеширует пароль через SHA-256 с солью (имя пользователя как соль).
+// Без соли одинаковые пароли давали бы одинаковые хеши, что упрощает атаку по словарю.
+// Примечание: смена алгоритма делает недействительными пароли существующих пользователей.
+// В реальном проекте используйте bcrypt: npm install bcrypt.
+function hashPassword(password, username) {
+  return crypto.createHash('sha256').update(username + ':' + password).digest('hex');
 }
 
 // ─── Middleware (обработчики, которые запускаются для каждого запроса) ───────
@@ -53,8 +55,12 @@ app.use(express.static(__dirname));
 // Сессия — это данные на сервере, привязанные к конкретному браузеру через cookie.
 // Когда пользователь входит, мы записываем req.session.username = "vasya".
 // При следующих запросах с того же браузера — имя сохраняется автоматически.
+// Секрет сессии: берём из переменной окружения SESSION_SECRET или используем запасной.
+// Чтобы задать переменную локально: SESSION_SECRET=my-secret npm start
+const SESSION_SECRET = process.env.SESSION_SECRET || 'chess-secret-key-change-in-production';
+
 app.use(session({
-  secret: 'chess-secret-key-change-in-production', // ключ подписи cookie (в реальном проекте — в .env)
+  secret: SESSION_SECRET, // ключ подписи cookie
   resave: false,           // не пересохранять сессию, если она не изменилась
   saveUninitialized: false, // не создавать пустые сессии для анонимных пользователей
   cookie: {
@@ -64,6 +70,11 @@ app.use(session({
 }));
 
 // ─── Роуты (обработчики конкретных URL) ─────────────────────────────────────
+
+// GET /analysis — страница анализа завершённой партии
+app.get('/analysis', (req, res) => {
+  res.sendFile(path.join(__dirname, 'analysis.html'));
+});
 
 // GET /me — кто сейчас вошёл?
 // Используется при загрузке страницы, чтобы проверить авторизацию
@@ -99,7 +110,7 @@ app.post('/register', (req, res) => {
   }
 
   // Сохраняем нового пользователя (пароль — только хеш, не сам пароль!)
-  users.push({ username, password: hashPassword(password) });
+  users.push({ username, password: hashPassword(password, username) });
   saveUsers(users);
 
   // Сразу входим — пользователь не должен вводить данные второй раз
@@ -120,7 +131,7 @@ app.post('/login', (req, res) => {
 
   // Ищем пользователя с совпадающим именем И хешем пароля
   const user = users.find(
-    u => u.username === username && u.password === hashPassword(password)
+    u => u.username === username && u.password === hashPassword(password, username)
   );
 
   if (!user) {

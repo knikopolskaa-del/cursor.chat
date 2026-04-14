@@ -498,6 +498,28 @@ body {
   margin-bottom: 8px;
 }
 
+/* Шапка страницы анализа: стрелка назад | заголовок | user-bar */
+.header--analysis {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  padding: 0 0 10px;
+}
+.header--analysis .user-bar {
+  margin-bottom: 0;
+}
+.back-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Страница анализа: только 2 колонки (доска + нотация), без левой панели */
+.main--analysis {
+  grid-template-columns: 1fr 1fr;
+}
+
 .user-bar__name {
   color: var(--text-muted);
   font-size: 0.9rem;
@@ -710,6 +732,23 @@ body {
 
 /* ── Нотация партии ──────────────────────────────────────────────────────── */
 
+/* Обёртка правой колонки: нотация + кнопки под ней */
+.notation-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: stretch;
+}
+
+/* Кнопки под нотацией */
+.notation-actions {
+  display: flex;
+  gap: 10px;
+}
+.notation-actions .btn {
+  flex: 1;
+}
+
 .notation-card {
   background: var(--bg-card);
   border-radius: 16px;
@@ -717,7 +756,7 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  align-self: stretch; /* растягивается по высоте соседней колонки с доской */
+  flex: 1; /* занимает всё доступное место в notation-column */
 }
 
 /* Кнопки навигации — прижаты вправо, без заголовка */

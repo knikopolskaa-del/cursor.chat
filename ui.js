@@ -4,9 +4,9 @@
   let playerNameEl;
   let gameStateEl;
   let newGameBtn;
-  let flipBoardBtn;
   let resignBtn;
   let drawBtn;
+  let analysisBtn;
   let notationBodyEl;
 
   const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -44,7 +44,7 @@
   }
 
   function renderBoard() {
-    const board = window.ChessGame.getBoard();
+    const board    = window.ChessGame.getBoard();
     const lastMove = window.ChessGame.getLastMove();
     boardEl.innerHTML = "";
 
@@ -85,7 +85,6 @@
           square.appendChild(fileLabel);
         }
 
-        // Selection and move indicators
         if (selected && isSameSquare(selected, { r: row, c: col })) {
           square.classList.add("selected");
         }
@@ -315,7 +314,7 @@
       return;
     }
 
-    // Индекс последнего полухода — его подсвечиваем
+    // Подсвечиваем последний сделанный ход
     const lastPly = history.length - 1;
 
     for (let i = 0; i < history.length; i += 2) {
@@ -345,7 +344,6 @@
       notationBodyEl.appendChild(pair);
     }
 
-    // Прокручиваем к последнему ходу
     notationBodyEl.scrollTop = notationBodyEl.scrollHeight;
   }
 
@@ -386,6 +384,9 @@
       gameStateEl.textContent = "Ваш ход";
       gameStateEl.classList.add("normal");
     }
+
+    // Кнопка Анализ активна только когда игра завершена
+    if (analysisBtn) analysisBtn.disabled = !window.ChessGame.isGameOver();
   }
 
   function onNewGame() {
@@ -393,11 +394,6 @@
     resigned = false;
     drawAgreed = false;
     clearSelection();
-    renderBoard();
-  }
-
-  function onFlipBoard() {
-    isFlipped = !isFlipped;
     renderBoard();
   }
 
@@ -409,31 +405,27 @@
     playerNameEl    = document.getElementById("player-name");
     gameStateEl     = document.getElementById("game-state");
     newGameBtn      = document.getElementById("new-game-btn");
-    flipBoardBtn    = document.getElementById("flip-board-btn");
     resignBtn       = document.getElementById("resign-btn");
+    analysisBtn     = document.getElementById("analysis-btn");
     drawBtn         = document.getElementById("draw-btn");
     notationBodyEl  = document.getElementById("notation-body");
 
     if (!boardEl || !playerNameEl || !gameStateEl) return;
 
-    // Навигация по нотации: скролл к началу/концу и по строке
-    const LINE = 26; // примерная высота одной строки нотации в пикселях
-    document.getElementById("notation-first")?.addEventListener("click", () => {
-      notationBodyEl.scrollTo({ top: 0, behavior: "smooth" });
-    });
-    document.getElementById("notation-prev")?.addEventListener("click", () => {
-      notationBodyEl.scrollBy({ top: -LINE, behavior: "smooth" });
-    });
-    document.getElementById("notation-next")?.addEventListener("click", () => {
-      notationBodyEl.scrollBy({ top: LINE, behavior: "smooth" });
-    });
-    document.getElementById("notation-last")?.addEventListener("click", () => {
-      notationBodyEl.scrollTo({ top: notationBodyEl.scrollHeight, behavior: "smooth" });
+    // Кнопка Анализ: сохраняем партию в localStorage и переходим на страницу анализа
+    analysisBtn?.addEventListener("click", () => {
+      const game = {
+        moveHistory:         window.ChessGame.getMoveHistory(),
+        boardSnapshots:      window.ChessGame.getBoardSnapshots(),
+        moveHistoryMeta:     window.ChessGame.getMoveHistoryMeta(),
+        initialBoardSnapshot: window.ChessGame.getInitialBoard(),
+      };
+      localStorage.setItem("lastGame", JSON.stringify(game));
+      window.location.href = "/analysis";
     });
 
     newGameBtn?.addEventListener("click", onNewGame);
-    flipBoardBtn?.addEventListener("click", onFlipBoard);
-    
+
     resignBtn?.addEventListener("click", () => {
       if (window.ChessGame.isGameOver()) return;
       resigned = true;
