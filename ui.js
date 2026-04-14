@@ -8,6 +8,8 @@
   let drawBtn;
   let analysisBtn;
   let notationBodyEl;
+  let gameOverOverlay;
+  let gameOverText;
 
   const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
@@ -359,30 +361,50 @@
 
     // Update game state
     gameStateEl.className = "game-state";
-    
+
+    let overlayMessage = null;
+
     if (status.checkmate) {
       const winner = status.winner === "w" ? "Белые" : "Чёрные";
       gameStateEl.textContent = "Мат! Победа: " + winner;
       gameStateEl.classList.add("checkmate");
+      overlayMessage = "Мат!\nПобеда " + winner;
     } else if (status.stalemate && drawAgreed) {
       gameStateEl.textContent = "Ничья по соглашению";
       gameStateEl.classList.add("normal");
+      overlayMessage = "Ничья\nпо соглашению";
     } else if (status.stalemate) {
       gameStateEl.textContent = "Пат — ничья";
       gameStateEl.classList.add("normal");
+      overlayMessage = "Пат — ничья";
     } else if (resigned && status.winner) {
       const winner = status.winner === "w" ? "Белые" : "Чёрные";
+      const loser  = status.winner === "w" ? "Чёрные" : "Белые";
       gameStateEl.textContent = "Победа " + winner + " (соперник сдался)";
       gameStateEl.classList.add("checkmate");
+      const winnerGen = status.winner === "w" ? "белых" : "чёрных";
+      const loserGen  = status.winner === "w" ? "чёрные" : "белые";
+      overlayMessage = "Победа " + winnerGen + "\n" + loserGen + " сдались";
     } else if (status.inCheck) {
       gameStateEl.textContent = "⚠ Шах!";
       gameStateEl.classList.add("check");
     } else if (window.ChessGame.isGameOver()) {
       gameStateEl.textContent = "Игра завершена";
       gameStateEl.classList.add("normal");
+      overlayMessage = "Игра завершена";
     } else {
       gameStateEl.textContent = "Ваш ход";
       gameStateEl.classList.add("normal");
+    }
+
+    // Показываем или скрываем плашку с результатом поверх доски
+    if (gameOverOverlay && gameOverText) {
+      if (overlayMessage) {
+        gameOverText.innerHTML = overlayMessage.replace(/\n/g, "<br>");
+        gameOverOverlay.classList.remove("hidden");
+      } else {
+        gameOverOverlay.classList.add("hidden");
+      }
     }
 
     // Кнопка Анализ активна только когда игра завершена
@@ -394,6 +416,7 @@
     resigned = false;
     drawAgreed = false;
     clearSelection();
+    if (gameOverOverlay) gameOverOverlay.classList.add("hidden");
     renderBoard();
   }
 
@@ -409,6 +432,8 @@
     analysisBtn     = document.getElementById("analysis-btn");
     drawBtn         = document.getElementById("draw-btn");
     notationBodyEl  = document.getElementById("notation-body");
+    gameOverOverlay = document.getElementById("game-over-overlay");
+    gameOverText    = document.getElementById("game-over-text");
 
     if (!boardEl || !playerNameEl || !gameStateEl) return;
 
